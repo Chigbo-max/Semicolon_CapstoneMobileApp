@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "241439644798",
+    "project_id": "anti-theft-vault-app",
+    "storage_bucket": "anti-theft-vault-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241439644798:android:3016ea565f7f0a57760c2f",
+        "android_client_info": {
+          "package_name": "com.antiTheftTracker.antiTheftTrackerApp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "241439644798-5pk2jk0v6tlfogcvrvkq3so6c5nc9erf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6r6B6bM9rENDZ7mtC2vtzQtenC-OD_EQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "241439644798-5pk2jk0v6tlfogcvrvkq3so6c5nc9erf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241439644798:android:7c177740a7a8fac5760c2f",
+        "android_client_info": {
+          "package_name": "com.antithefttracker.agent"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "241439644798-5pk2jk0v6tlfogcvrvkq3so6c5nc9erf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6r6B6bM9rENDZ7mtC2vtzQtenC-OD_EQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "241439644798-5pk2jk0v6tlfogcvrvkq3so6c5nc9erf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
