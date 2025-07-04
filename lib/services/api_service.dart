@@ -6,7 +6,7 @@ import 'fcm_service.dart';
 final _logger = Logger();
 
 class ApiService {
-  static const String _baseUrl = 'https://1119-62-173-45-70.ngrok-free.app';
+  static const String _baseUrl = 'https://292d-105-113-75-223.ngrok-free.app';
   static const String _registerUrl = '$_baseUrl/api/v1/device/register';
   static const String _fcmTokenUrl = '$_baseUrl/api/v1/fcm/token';
   static const String _locationUrl ='$_baseUrl/api/v1/device/location';

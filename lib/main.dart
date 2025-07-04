@@ -77,7 +77,7 @@ Future<void> main() async {
   final storage = SecureStorageService();
   final fcmService = FcmService();
   final prefs = await SharedPreferences.getInstance();
-  const deviceId = "test-device-001";
+  const deviceId = "PPR1.180610.011";
   const simSerial = "test-sim-001";
 
   try {
