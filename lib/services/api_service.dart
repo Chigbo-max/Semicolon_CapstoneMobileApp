@@ -6,10 +6,10 @@ import 'fcm_service.dart';
 final _logger = Logger();
 
 class ApiService {
-  static const String _baseUrl = 'https://292d-105-113-75-223.ngrok-free.app';
+  static const String _baseUrl = 'https://45329aa2c129.ngrok-free.app';
   static const String _registerUrl = '$_baseUrl/api/v1/device/register';
   static const String _fcmTokenUrl = '$_baseUrl/api/v1/fcm/token';
-  static const String _locationUrl ='$_baseUrl/api/v1/device/location';
+  static const String _locationUrl ='$_baseUrl/api/v1/device/location/report';
   static const String _theftReportUrl = '$_baseUrl/api/v1/theft/report';
 
   static Future<http.Response?> registerDevice(
@@ -27,9 +27,9 @@ class ApiService {
       'deviceModel': deviceInfo['deviceModel'],
       'serialNumber': deviceInfo['serialNumber'],
       'imei': deviceInfo['serialNumber'],
-      'simIccidSlot0': ['simIccidSlot0'],
-      'phoneNumberSlot0': ['phoneNumberSlot0'],
-      'carrierNameSlot0': ['carrierNameSlot0'],
+      'simIccidSlot0': deviceInfo['simIccidSlot0'] ?? '',
+      'phoneNumberSlot0': deviceInfo['phoneNumberSlot0'] ?? '',
+      'carrierNameSlot0': deviceInfo['carrierNameSlot0'] ?? '',
       'latitude': location?['latitude']?.toDouble(),
       'longitude': location?['longitude']?.toDouble(),
       'fcmToken': token,
@@ -194,7 +194,7 @@ class ApiService {
     }
   }
 
- static Future<void> updateFcmToken(String deviceId, String fcmToken) async {
+   static Future<void> updateFcmToken(String deviceId, String fcmToken) async {
   final url = Uri.parse('$_baseUrl/api/v1/fcm/token');
   try {
     final response = await http.post(
@@ -205,7 +205,7 @@ class ApiService {
     if (response.statusCode == 200) {
       Logger().d('FCM token updated successfully');
     } else {
-      Logger().e('Failed to update FCM token: ${response.statusCode}');
+      Logger().e('Failed to update FCM token: ${response.statusCode} - ${response.body}');
     }
   } catch (e) {
     Logger().e('Error updating FCM token: $e');
