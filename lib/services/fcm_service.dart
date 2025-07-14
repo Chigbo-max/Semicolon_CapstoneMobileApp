@@ -3,7 +3,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:vibration/vibration.dart'; 
 import 'api_service.dart';
 import 'package:logger/logger.dart';
-import '../commandHandlers/lock_command_handler.dart';
 import '../commandHandlers/wipe_command_handler.dart';
 import '../commandHandlers/theft_report_command_handler.dart';
 
@@ -46,21 +45,31 @@ class FcmService {
   }
 
   final Map<String, CommandHandler> _commandHandlers = {
-    'lock': LockCommandHandler(),
     'wipe': WipeCommandHandler(),
     'theft_report': TheftReportCommandHandler(),
+    // Note: 'lock' command is handled directly by native CommandService
   };
 
   void _handleCommand(String command) {
-
-  final handler = _commandHandlers[command];
-  if (handler != null) {
-    _logger.i("Handling command: $command");
-    handler.handle();
-  }else{
-    _logger.e("Unknown command: $command");
-  }
+    _logger.i("Received command to handle: $command");
     
+    // Lock command is handled directly by native CommandService
+    if (command == 'lock') {
+      _logger.i("Lock command received - handled by native CommandService");
+      return;
+    }
+    
+    final handler = _commandHandlers[command];
+    if (handler != null) {
+      _logger.i("Found handler for command: $command");
+      handler.handle().then((_) {
+        _logger.i("Command $command handled successfully");
+      }).catchError((error) {
+        _logger.e("Error handling command $command: $error");
+      });
+    } else {
+      _logger.e("Unknown command: $command");
+    }
   }
 
   static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {

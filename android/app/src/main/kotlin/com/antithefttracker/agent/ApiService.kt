@@ -10,7 +10,7 @@ import java.io.IOException
 object ApiService {
     private const val TAG = "ApiService"
     private val client = OkHttpClient()
-    private const val FCM_URL = "https://45329aa2c129.ngrok-free.app/api/v1/fcm/token"
+    private const val FCM_URL = "https://34f33fffc084.ngrok-free.app/api/v1/fcm/token"
 
     fun updateFcmToken(deviceId: String, token: String) {
         val json = JSONObject().apply {

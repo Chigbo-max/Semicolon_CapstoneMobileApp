@@ -120,6 +120,15 @@ class MainActivity : FlutterActivity() {
             intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Enable device admin to lock the device remotely.")
             startActivity(intent)
             Log.d("MainActivity", "Device admin prompt launched")
+        } else {
+            Log.d("MainActivity", "Device admin is already active")
+            // Test the lock functionality
+            try {
+                val canLock = dpm.isAdminActive(componentName)
+                Log.d("MainActivity", "Can lock device: $canLock")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error checking lock capability: ${e.message}", e)
+            }
         }
     }
 
@@ -181,12 +190,20 @@ class MainActivity : FlutterActivity() {
             try {
                 when (call.method) {
                     "lockDevice" -> {
-                        dpm.lockNow()
-                        val intent = Intent(this, LockActivity::class.java)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                        startActivity(intent)
-                        Log.d("CommandChannel", "Device locked and LockActivity launched")
-                        result.success("Device locked and UI launched")
+                        try {
+                            Log.d("CommandChannel", "Attempting to lock device...")
+                            dpm.lockNow()
+                            Log.d("CommandChannel", "lockNow() called successfully")
+                            
+                            val intent = Intent(this, LockActivity::class.java)
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                            startActivity(intent)
+                            Log.d("CommandChannel", "Device locked and LockActivity launched")
+                            result.success("Device locked and UI launched")
+                        } catch (e: Exception) {
+                            Log.e("CommandChannel", "Error locking device: ${e.message}", e)
+                            result.error("LOCK_ERROR", "Failed to lock device: ${e.message}", null)
+                        }
                     }
                     "wipeDevice" -> {
                         dpm.wipeData(DevicePolicyManager.WIPE_EXTERNAL_STORAGE or DevicePolicyManager.WIPE_RESET_PROTECTION_DATA)

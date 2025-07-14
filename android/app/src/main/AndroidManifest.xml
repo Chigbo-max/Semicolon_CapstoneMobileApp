@@ -14,6 +14,8 @@ package="com.antithefttracker.agent">
 <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE"
     android:permissionGroup="android.permission-group.PHONE"
     android:protectionLevel="signature|privileged"/>
+<uses-permission android:name="android.permission.BIND_DEVICE_ADMIN"/>
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
 
     <application
@@ -53,6 +55,7 @@ package="com.antithefttracker.agent">
     android:theme="@style/Theme.AppCompat.Light.NoActionBar"
     android:showOnLockScreen="true"
     android:turnScreenOn="true"
+    android:showWhenLocked="true"
     android:exported="true"/>
 
          <receiver android:name=".BootReceiver" android:enabled="true" android:exported="true">

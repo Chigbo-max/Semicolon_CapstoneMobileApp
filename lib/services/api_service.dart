@@ -6,54 +6,56 @@ import 'fcm_service.dart';
 final _logger = Logger();
 
 class ApiService {
-  static const String _baseUrl = 'https://45329aa2c129.ngrok-free.app';
+  static const String _baseUrl = 'https://34f33fffc084.ngrok-free.app';
   static const String _registerUrl = '$_baseUrl/api/v1/device/register';
   static const String _fcmTokenUrl = '$_baseUrl/api/v1/fcm/token';
   static const String _locationUrl ='$_baseUrl/api/v1/device/location/report';
   static const String _theftReportUrl = '$_baseUrl/api/v1/theft/report';
 
-  static Future<http.Response?> registerDevice(
-    String deviceId,
-    Map<String, dynamic> deviceInfo,
-    Map<String, double>? location,
-  ) async {
-    final token = await FcmService().getFCMToken();
+  static Future<bool> registerDevice(
+  String deviceId,
+  Map<String, dynamic> deviceInfo,
+  Map<String, double>? location,
+) async {
+  final token = await FcmService().getFCMToken();
+  final url = Uri.parse(_registerUrl);
 
-    final url = Uri.parse(_registerUrl);
+  final body = {
+    'deviceId': deviceId,
+    'manufacturer': deviceInfo['manufacturer'],
+    'deviceModel': deviceInfo['deviceModel'],
+    'serialNumber': deviceInfo['serialNumber'],
+    'imei': deviceInfo['serialNumber'],
+    'simSerialNumber': deviceInfo['simIccidSlot0'] ?? '',
+    'phoneNumber': deviceInfo['phoneNumberSlot0'] ?? '',
+    'carrierName': deviceInfo['carrierNameSlot0'] ?? '',
+    'latitude': location?['latitude']?.toDouble(),
+    'longitude': location?['longitude']?.toDouble(),
+    'fcmToken': token,
+  };
 
-    final body = {
-      'deviceId': deviceId,
-      'manufacturer': deviceInfo['manufacturer'],
-      'deviceModel': deviceInfo['deviceModel'],
-      'serialNumber': deviceInfo['serialNumber'],
-      'imei': deviceInfo['serialNumber'],
-      'simIccidSlot0': deviceInfo['simIccidSlot0'] ?? '',
-      'phoneNumberSlot0': deviceInfo['phoneNumberSlot0'] ?? '',
-      'carrierNameSlot0': deviceInfo['carrierNameSlot0'] ?? '',
-      'latitude': location?['latitude']?.toDouble(),
-      'longitude': location?['longitude']?.toDouble(),
-      'fcmToken': token,
-    };
+  try {
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'deviceId': deviceId,
+      },
+      body: jsonEncode(body),
+    );
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json',
-        'deviceId': deviceId},
-        body: jsonEncode(body),
-      );
-
-      return response;
-
-      // if (response.statusCode != 200) {
-      //   _logger.e("Failed to enroll device: ${response.body}");
-      // }
-    } catch (e) {
-      _logger.e("Error sending enrollment data: $e");
-      return null;
+    if (response.statusCode == 200) {
+      _logger.i("Device registered successfully: ${response.body}");
+      return true;
+    } else {
+      _logger.e("Failed to register device: ${response.statusCode} - ${response.body}");
+      return false;
     }
+  } catch (e) {
+    _logger.e("Error registering device: $e");
+    return false;
   }
-
+}
 
   static Future<void> sendTheftReport({
   required String deviceId,
@@ -194,21 +196,28 @@ class ApiService {
     }
   }
 
-   static Future<void> updateFcmToken(String deviceId, String fcmToken) async {
-  final url = Uri.parse('$_baseUrl/api/v1/fcm/token');
+  static Future<bool> updateFcmToken(String deviceId, String fcmToken) async {
+  final url = Uri.parse(_fcmTokenUrl);
   try {
     final response = await http.post(
       url,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'deviceId': deviceId,
+      },
       body: jsonEncode({'deviceId': deviceId, 'fcmToken': fcmToken}),
-    ).timeout(Duration(seconds: 10));
+    ).timeout(const Duration(seconds: 10));
+
     if (response.statusCode == 200) {
-      Logger().d('FCM token updated successfully');
+      _logger.i('FCM token updated successfully');
+      return true;
     } else {
-      Logger().e('Failed to update FCM token: ${response.statusCode} - ${response.body}');
+      _logger.e('Failed to update FCM token: ${response.statusCode} - ${response.body}');
+      return false;
     }
   } catch (e) {
-    Logger().e('Error updating FCM token: $e');
+    _logger.e('Error updating FCM token: $e');
+    return false;
   }
 }
 

@@ -21,6 +21,14 @@ class LockActivity : FragmentActivity() {
             return
         }
 
+        // Force the screen to stay on
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        
+        // Make sure this activity shows on top of everything
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD)
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
+
         showBiometricPrompt()
 
         val layout = LinearLayout(this).apply {
@@ -34,9 +42,16 @@ class LockActivity : FragmentActivity() {
         }
 
         val title = TextView(this).apply {
-            text = "Enter PIN to Unlock"
+            text = "Device Locked"
             setTextColor(Color.WHITE)
-            textSize = 24f
+            textSize = 28f
+            gravity = Gravity.CENTER
+        }
+
+        val subtitle = TextView(this).apply {
+            text = "Enter PIN to Unlock"
+            setTextColor(Color.GRAY)
+            textSize = 18f
             gravity = Gravity.CENTER
         }
 
@@ -58,11 +73,13 @@ class LockActivity : FragmentActivity() {
                     finish()
                 } else {
                     Toast.makeText(this@LockActivity, "Incorrect PIN", Toast.LENGTH_SHORT).show()
+                    pinInput.text.clear()
                 }
             }
         }
 
         layout.addView(title)
+        layout.addView(subtitle)
         layout.addView(pinInput)
         layout.addView(unlockBtn)
 

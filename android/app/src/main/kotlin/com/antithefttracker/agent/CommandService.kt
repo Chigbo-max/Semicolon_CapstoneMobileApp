@@ -31,6 +31,8 @@ class CommandService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d("CommandService", "CommandService onCreate called")
+        
         val notification = NotificationCompat.Builder(this, "command_channel")
             .setContentTitle("Anti-Theft Service")
             .setContentText("Running in background")
@@ -38,7 +40,7 @@ class CommandService : Service() {
             .build()
         try {
             startForeground(1, notification)
-            Log.d("CommandService", "Foreground service started")
+            Log.d("CommandService", "Foreground service started successfully")
         } catch (e: Exception) {
             Log.e("CommandService", "Error starting foreground service: ${e.message}", e)
         }
@@ -46,6 +48,7 @@ class CommandService : Service() {
         commandReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 Log.d("CommandService", "Broadcast received: ${intent?.action}")
+                Log.d("CommandService", "Intent extras: ${intent?.extras}")
                 val cmd = intent?.getStringExtra("command") ?: run {
                     Log.e("CommandService", "No command extra in broadcast")
                     return
@@ -54,20 +57,60 @@ class CommandService : Service() {
                 val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AntiTheft:CommandLock")
                 wakeLock.acquire(10_000)
                 try {
-                    Log.d("CommandService", "Processing command: $cmd")
-                    when (cmd) {
+                                    Log.d("CommandService", "Processing command: $cmd")
+                Log.d("CommandService", "Command type: ${cmd::class.java.simpleName}")
+                when (cmd) {
                         "lock" -> {
                             val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
                             val componentName = ComponentName(this@CommandService, MyDeviceAdminReceiver::class.java)
                             Log.d("CommandService", "Device admin active: ${dpm.isAdminActive(componentName)}")
                             if (dpm.isAdminActive(componentName)) {
-                                dpm.lockNow()
-                                val lockIntent = Intent(this@CommandService, LockActivity::class.java)
-                                lockIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                startActivity(lockIntent)
-                                Log.d("CommandService", "Device locked and LockActivity launched")
+                                try {
+                                    // Try to lock the device immediately
+                                    Log.d("CommandService", "Executing lockNow()...")
+                                    dpm.lockNow()
+                                    Log.d("CommandService", "lockNow() executed successfully")
+                                    
+                                    // Wait a moment for the lock to take effect
+                                    Thread.sleep(500)
+                                    
+                                    // Launch the lock activity
+                                    val lockIntent = Intent(this@CommandService, LockActivity::class.java)
+                                    lockIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    startActivity(lockIntent)
+                                    Log.d("CommandService", "Device locked and LockActivity launched")
+                                    
+                                    // Show notification to indicate the device is locked
+                                    showLockNotification()
+                                    
+                                    // Also send a broadcast to the Flutter app to update UI
+                                    val flutterIntent = Intent("com.antithefttracker.agent.LOCK_EXECUTED")
+                                    sendBroadcast(flutterIntent)
+                                    
+                                } catch (e: Exception) {
+                                    Log.e("CommandService", "Error locking device: ${e.message}", e)
+                                    // Try alternative locking method
+                                    try {
+                                        Log.d("CommandService", "Trying alternative lock method...")
+                                        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as android.app.KeyguardManager
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                            if (!keyguardManager.isKeyguardLocked) {
+                                                Log.d("CommandService", "Attempting to lock via keyguard...")
+                                                // This is a fallback method
+                                            }
+                                        }
+                                    } catch (e2: Exception) {
+                                        Log.e("CommandService", "Alternative lock method also failed: ${e2.message}", e2)
+                                    }
+                                }
                             } else {
                                 Log.e("CommandService", "Device admin not active")
+                                // Try to prompt for device admin again
+                                val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+                                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, componentName)
+                                intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Enable device admin to lock the device remotely.")
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                startActivity(intent)
                             }
                         }
                         "wipe" -> {
@@ -110,7 +153,7 @@ class CommandService : Service() {
         }
         try {
             registerReceiver(commandReceiver, IntentFilter("com.antithefttracker.agent.COMMAND"))
-            Log.d("CommandService", "Broadcast receiver registered")
+            Log.d("CommandService", "Broadcast receiver registered successfully for: com.antithefttracker.agent.COMMAND")
         } catch (e: Exception) {
             Log.e("CommandService", "Error registering receiver: ${e.message}", e)
         }
@@ -134,6 +177,31 @@ class CommandService : Service() {
             Log.e("CommandService", "Error unregistering receiver: ${e.message}", e)
         }
         Log.d("CommandService", "Service destroyed")
+    }
+
+    private fun showLockNotification() {
+        val channelId = "lock_alert"
+        val notificationIntent = Intent(this, LockActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(android.R.drawable.ic_lock_lock)
+            .setContentTitle("Device Locked")
+            .setContentText("Your device has been locked remotely.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(false)
+            .setContentIntent(pendingIntent)
+
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Lock Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Alerts about device locking"
+            }
+            manager.createNotificationChannel(channel)
+        }
+
+        manager.notify(1002, notification.build())
     }
 
     private fun showTheftNotification() {

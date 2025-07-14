@@ -10,7 +10,6 @@ import 'package:workmanager/workmanager.dart';
 import 'utils/secure_storage.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'commandHandlers/lock_command_handler.dart';
 
 final _logger = Logger();
 
@@ -19,11 +18,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   _logger.i("Handling background FCM message: ${message.data}");
   final command = message.data['type'];
-  if (command == 'lock') {
-    await LockCommandHandler().handle();
-  } else if (command == 'wipe') {
+  
+  if (command == 'wipe') {
     await WipeCommandHandler().handle();
-
   } else if (command == 'theft_report') {
     final storage = SecureStorageService();
     final deviceId = await storage.readValue('device_id');
@@ -77,7 +74,7 @@ Future<void> main() async {
   final storage = SecureStorageService();
   final fcmService = FcmService();
   final prefs = await SharedPreferences.getInstance();
-  const deviceId = "PPR1.180610.011";
+  const deviceId = "PPR1.180610.013";
   const simSerial = "test-sim-001";
 
   try {
@@ -107,16 +104,16 @@ Future<void> main() async {
       _logger.d("Device Info: $deviceInfo");
       _logger.d("Last Known Location: $location");
 
-      final response = await ApiService.registerDevice(
+      final registrationSuccess = await ApiService.registerDevice(
         deviceId,
         deviceInfo,
         location.toMap(),
       );
-      if (response != null && response.statusCode == 200) {
-        _logger.d("Device registration successful: ${response.body}");
+      if (registrationSuccess) {
+        _logger.d("Device registration successful");
         await storage.writeValue('registrationPending', 'false');
       } else {
-        _logger.e("Device registration failed: ${response?.body}");
+        _logger.e("Device registration failed");
         await storage.writeValue('registrationPending', 'true');
       }
     }
@@ -139,9 +136,5 @@ Future<void> main() async {
     _logger.e("Error during initialization: $e", stackTrace: stack);
   }
 
-  
-
   runApp(Container());
-
-  
 }
